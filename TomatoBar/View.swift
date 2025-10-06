@@ -224,6 +224,18 @@ struct TBPopoverView: View {
             Group {
                 Button {
                     NSApp.activate(ignoringOtherApps: true)
+                    TBStatusItem.shared.showProductivityWindow()
+                } label: {
+                    Text(NSLocalizedString("TBPopoverView.productivity.label",
+                                           comment: "Productivity label"))
+                    Spacer()
+                    Text("⌘ P").foregroundColor(Color.gray)
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut("p")
+
+                Button {
+                    NSApp.activate(ignoringOtherApps: true)
                     NSApp.orderFrontStandardAboutPanel()
                 } label: {
                     Text(NSLocalizedString("TBPopoverView.about.label",

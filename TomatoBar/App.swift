@@ -33,6 +33,7 @@ class TBStatusItem: NSObject, NSApplicationDelegate {
     }
     private var _popover = NSPopover()
     private var statusBarItem: NSStatusItem?
+    private var productivityWindow: NSWindow?
     static var shared: TBStatusItem!
 
     func applicationDidFinishLaunching(_: Notification) {
@@ -90,5 +91,25 @@ class TBStatusItem: NSObject, NSApplicationDelegate {
         } else {
             showPopover(sender)
         }
+    }
+
+    func showProductivityWindow() {
+        if let window = productivityWindow {
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        let contentView = ProductivityView()
+        let hostingController = NSHostingController(rootView: contentView)
+
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = NSLocalizedString("ProductivityView.title", comment: "Productivity Stats")
+        window.styleMask = [.titled, .closable]
+        window.setContentSize(NSSize(width: 240, height: 200))
+        window.center()
+        window.isReleasedWhenClosed = false
+
+        productivityWindow = window
+        window.makeKeyAndOrderFront(nil)
     }
 }

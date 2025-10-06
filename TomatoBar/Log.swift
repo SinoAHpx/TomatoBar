@@ -15,9 +15,9 @@ class TBLogEventTransition: TBLogEvent {
     internal let type = "transition"
     internal let timestamp: Date = Date()
 
-    private let event: String
-    private let fromState: String
-    private let toState: String
+    internal let event: String
+    internal let fromState: String
+    internal let toState: String
 
     init(fromContext ctx: TBStateMachine.Context) {
         event = "\(ctx.event!)"
