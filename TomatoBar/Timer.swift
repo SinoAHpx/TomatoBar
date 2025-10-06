@@ -171,8 +171,9 @@ class TBTimer: ObservableObject {
                 /*
                  Ticks can be missed during the machine sleep.
                  Stop the timer if it goes beyond an overrun time limit.
+                 Only force stop during work intervals to prevent skipping rest periods.
                  */
-                if timeLeft < overrunTimeLimit {
+                if timeLeft < overrunTimeLimit && stateMachine.state == .work {
                     stateMachine <-! .startStop
                 } else {
                     stateMachine <-! .timerFired
