@@ -152,7 +152,7 @@ struct TBPopoverView: View {
                     timer.startStop()
                     TBStatusItem.shared.closePopover(nil)
                 } label: {
-                    Text(timer.timer != nil ?
+                    Text(timer.timer != nil || timer.isPaused ?
                          (buttonHovered ? stopLabel : timer.timeLeftString) :
                             startLabel)
                         /*
