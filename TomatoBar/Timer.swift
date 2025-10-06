@@ -5,6 +5,7 @@ import SwiftUI
 class TBTimer: ObservableObject {
     @AppStorage("stopAfterBreak") var stopAfterBreak = false
     @AppStorage("showTimerInMenuBar") var showTimerInMenuBar = true
+    @AppStorage("enablePauseFeature") var enablePauseFeature = false
     @AppStorage("workIntervalLength") var workIntervalLength = 25
     @AppStorage("shortRestIntervalLength") var shortRestIntervalLength = 5
     @AppStorage("longRestIntervalLength") var longRestIntervalLength = 15

@@ -66,10 +66,12 @@ private struct SettingsView: View {
                                        comment: "Shortcut label"))
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            KeyboardShortcuts.Recorder(for: .pauseTimer) {
-                Text(NSLocalizedString("SettingsView.pauseShortcut.label",
-                                       comment: "Pause shortcut label"))
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            if timer.enablePauseFeature {
+                KeyboardShortcuts.Recorder(for: .pauseTimer) {
+                    Text(NSLocalizedString("SettingsView.pauseShortcut.label",
+                                           comment: "Pause shortcut label"))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
             Toggle(isOn: $timer.stopAfterBreak) {
                 Text(NSLocalizedString("SettingsView.stopAfterBreak.label",
@@ -84,6 +86,11 @@ private struct SettingsView: View {
                 .onChange(of: timer.showTimerInMenuBar) { _ in
                     timer.updateTimeLeft()
                 }
+            Toggle(isOn: $timer.enablePauseFeature) {
+                Text(NSLocalizedString("SettingsView.enablePauseFeature.label",
+                                       comment: "Enable pause feature label"))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }.toggleStyle(.switch)
             Toggle(isOn: $launchAtLogin.isEnabled) {
                 Text(NSLocalizedString("SettingsView.launchAtLogin.label",
                                        comment: "Launch at login label"))
@@ -149,7 +156,7 @@ struct TBPopoverView: View {
         guard let popover = TBStatusItem.shared.popover else { return }
 
         let baseHeight: CGFloat = 276
-        let settingsExtraHeight: CGFloat = 30
+        let settingsExtraHeight: CGFloat = timer.enablePauseFeature ? 60 : 30
 
         switch view {
         case .settings:
@@ -184,7 +191,7 @@ struct TBPopoverView: View {
                 .controlSize(.large)
                 .keyboardShortcut(.defaultAction)
 
-                if timer.timer != nil || timer.isPaused {
+                if timer.enablePauseFeature && (timer.timer != nil || timer.isPaused) {
                     Button {
                         timer.pause()
                     } label: {
@@ -208,6 +215,11 @@ struct TBPopoverView: View {
             .pickerStyle(.segmented)
             .onChange(of: activeChildView) { newView in
                 updatePopoverHeight(for: newView)
+            }
+            .onChange(of: timer.enablePauseFeature) { _ in
+                if activeChildView == .settings {
+                    updatePopoverHeight(for: .settings)
+                }
             }
 
             GroupBox {
