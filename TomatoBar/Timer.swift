@@ -156,6 +156,7 @@ class TBTimer: ObservableObject {
     }
 
     private func stopTimer() {
+        guard timer != nil else { return }
         timer!.cancel()
         timer = nil
     }
@@ -250,6 +251,7 @@ class TBTimer: ObservableObject {
         player.stopTicking()
         TBStatusItem.shared.setIcon(name: .idle)
         isPaused = true
+        timeLeftString = timerFormatter.string(from: 0, to: remainingTimeWhenPaused)!
     }
 
     private func onPauseEnd(context ctx: TBStateMachine.Context) {
