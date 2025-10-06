@@ -28,19 +28,22 @@ struct TBApp: App {
 }
 
 class TBStatusItem: NSObject, NSApplicationDelegate {
-    private var popover = NSPopover()
+    var popover: NSPopover? {
+        return _popover
+    }
+    private var _popover = NSPopover()
     private var statusBarItem: NSStatusItem?
     static var shared: TBStatusItem!
 
     func applicationDidFinishLaunching(_: Notification) {
         let view = TBPopoverView()
 
-        popover.behavior = .transient
-        popover.contentViewController = NSViewController()
-        popover.contentViewController?.view = NSHostingView(rootView: view)
-        if let contentViewController = popover.contentViewController {
-            popover.contentSize.height = contentViewController.view.intrinsicContentSize.height
-            popover.contentSize.width = 240
+        _popover.behavior = .transient
+        _popover.contentViewController = NSViewController()
+        _popover.contentViewController?.view = NSHostingView(rootView: view)
+        if let contentViewController = _popover.contentViewController {
+            _popover.contentSize.height = contentViewController.view.intrinsicContentSize.height
+            _popover.contentSize.width = 240
         }
 
         statusBarItem = NSStatusBar.system.statusItem(
@@ -72,17 +75,17 @@ class TBStatusItem: NSObject, NSApplicationDelegate {
 
     func showPopover(_: AnyObject?) {
         if let button = statusBarItem?.button {
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: NSRectEdge.minY)
-            popover.contentViewController?.view.window?.makeKey()
+            _popover.show(relativeTo: button.bounds, of: button, preferredEdge: NSRectEdge.minY)
+            _popover.contentViewController?.view.window?.makeKey()
         }
     }
 
     func closePopover(_ sender: AnyObject?) {
-        popover.performClose(sender)
+        _popover.performClose(sender)
     }
 
     @objc func togglePopover(_ sender: AnyObject?) {
-        if popover.isShown {
+        if _popover.isShown {
             closePopover(sender)
         } else {
             showPopover(sender)

@@ -145,6 +145,20 @@ struct TBPopoverView: View {
     private var pauseLabel = NSLocalizedString("TBPopoverView.pause.label", comment: "Pause label")
     private var resumeLabel = NSLocalizedString("TBPopoverView.resume.label", comment: "Resume label")
 
+    private func updatePopoverHeight(for view: ChildView) {
+        guard let popover = TBStatusItem.shared.popover else { return }
+
+        let baseHeight: CGFloat = 276
+        let settingsExtraHeight: CGFloat = 30
+
+        switch view {
+        case .settings:
+            popover.contentSize.height = baseHeight + settingsExtraHeight
+        default:
+            popover.contentSize.height = baseHeight
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
@@ -192,6 +206,9 @@ struct TBPopoverView: View {
             .labelsHidden()
             .frame(maxWidth: .infinity)
             .pickerStyle(.segmented)
+            .onChange(of: activeChildView) { newView in
+                updatePopoverHeight(for: newView)
+            }
 
             GroupBox {
                 switch activeChildView {
