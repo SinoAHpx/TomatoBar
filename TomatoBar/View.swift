@@ -4,6 +4,7 @@ import SwiftUI
 
 extension KeyboardShortcuts.Name {
     static let startStopTimer = Self("startStopTimer")
+    static let pauseTimer = Self("pauseTimer")
 }
 
 private struct IntervalsView: View {
@@ -63,6 +64,11 @@ private struct SettingsView: View {
             KeyboardShortcuts.Recorder(for: .startStopTimer) {
                 Text(NSLocalizedString("SettingsView.shortcut.label",
                                        comment: "Shortcut label"))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            KeyboardShortcuts.Recorder(for: .pauseTimer) {
+                Text(NSLocalizedString("SettingsView.pauseShortcut.label",
+                                       comment: "Pause shortcut label"))
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             Toggle(isOn: $timer.stopAfterBreak) {
@@ -136,30 +142,44 @@ struct TBPopoverView: View {
 
     private var startLabel = NSLocalizedString("TBPopoverView.start.label", comment: "Start label")
     private var stopLabel = NSLocalizedString("TBPopoverView.stop.label", comment: "Stop label")
+    private var pauseLabel = NSLocalizedString("TBPopoverView.pause.label", comment: "Pause label")
+    private var resumeLabel = NSLocalizedString("TBPopoverView.resume.label", comment: "Resume label")
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Button {
-                timer.startStop()
-                TBStatusItem.shared.closePopover(nil)
-            } label: {
-                Text(timer.timer != nil ?
-                     (buttonHovered ? stopLabel : timer.timeLeftString) :
-                        startLabel)
-                    /*
-                      When appearance is set to "Dark" and accent color is set to "Graphite"
-                      "defaultAction" button label's color is set to the same color as the
-                      button, making the button look blank. #24
-                     */
-                    .foregroundColor(Color.white)
-                    .font(.system(.body).monospacedDigit())
-                    .frame(maxWidth: .infinity)
+            HStack(spacing: 8) {
+                Button {
+                    timer.startStop()
+                    TBStatusItem.shared.closePopover(nil)
+                } label: {
+                    Text(timer.timer != nil ?
+                         (buttonHovered ? stopLabel : timer.timeLeftString) :
+                            startLabel)
+                        /*
+                          When appearance is set to "Dark" and accent color is set to "Graphite"
+                          "defaultAction" button label's color is set to the same color as the
+                          button, making the button look blank. #24
+                         */
+                        .foregroundColor(Color.white)
+                        .font(.system(.body).monospacedDigit())
+                        .frame(maxWidth: .infinity)
+                }
+                .onHover { over in
+                    buttonHovered = over
+                }
+                .controlSize(.large)
+                .keyboardShortcut(.defaultAction)
+
+                if timer.timer != nil || timer.isPaused {
+                    Button {
+                        timer.pause()
+                    } label: {
+                        Text(timer.isPaused ? resumeLabel : pauseLabel)
+                            .frame(width: 60)
+                    }
+                    .controlSize(.large)
+                }
             }
-            .onHover { over in
-                buttonHovered = over
-            }
-            .controlSize(.large)
-            .keyboardShortcut(.defaultAction)
 
             Picker("", selection: $activeChildView) {
                 Text(NSLocalizedString("TBPopoverView.intervals.label",

@@ -6,6 +6,7 @@
 "IntervalsView.workIntervalsInSet.label" = "Work intervals in a set:";
 "IntervalsView.workIntervalsInSet.help" = "Number of working intervals in the set, after which a lengthy break taken";
 "SettingsView.shortcut.label" = "Shortcut";
+"SettingsView.pauseShortcut.label" = "Pause shortcut";
 "SettingsView.stopAfterBreak.label" = "Stop after break";
 "SettingsView.showTimerInMenuBar.label" = "Show timer in menu bar";
 "SettingsView.launchAtLogin.label" = "Launch at login";
@@ -14,6 +15,8 @@
 "SoundsView.isTickingEnabled.label" = "Ticking";
 "TBPopoverView.start.label" = "Start";
 "TBPopoverView.stop.label" = "Stop";
+"TBPopoverView.pause.label" = "Pause";
+"TBPopoverView.resume.label" = "Resume";
 "TBPopoverView.intervals.label" = "Intervals";
 "TBPopoverView.settings.label" = "Settings";
 "TBPopoverView.sounds.label" = "Sounds";

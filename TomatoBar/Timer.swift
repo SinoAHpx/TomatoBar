@@ -18,8 +18,11 @@ class TBTimer: ObservableObject {
     private var notificationCenter = TBNotificationCenter()
     private var finishTime: Date!
     private var timerFormatter = DateComponentsFormatter()
+    private var pausedState: TBStateMachineStates?
+    private var remainingTimeWhenPaused: TimeInterval = 0
     @Published var timeLeftString: String = ""
     @Published var timer: DispatchSourceTimer?
+    @Published var isPaused: Bool = false
 
     init() {
         /*
@@ -42,9 +45,15 @@ class TBTimer: ObservableObject {
          *   +--------------------------------+
          *      timerFired (stopAfterBreak)
          *
+         *              pause          pause
+         *  work <-----------> paused <-----------> rest
+         *
          */
         stateMachine.addRoutes(event: .startStop, transitions: [
-            .idle => .work, .work => .idle, .rest => .idle,
+            .idle => .work, .work => .idle, .rest => .idle, .paused => .idle,
+        ])
+        stateMachine.addRoutes(event: .pause, transitions: [
+            .work => .paused, .rest => .paused, .paused => .work, .paused => .rest,
         ])
         stateMachine.addRoutes(event: .timerFired, transitions: [.work => .rest])
         stateMachine.addRoutes(event: .timerFired, transitions: [.rest => .idle]) { _ in
@@ -65,6 +74,8 @@ class TBTimer: ObservableObject {
         stateMachine.addAnyHandler(.any => .rest, handler: onRestStart)
         stateMachine.addAnyHandler(.rest => .work, handler: onRestFinish)
         stateMachine.addAnyHandler(.any => .idle, handler: onIdleStart)
+        stateMachine.addAnyHandler(.any => .paused, handler: onPauseStart)
+        stateMachine.addAnyHandler(.paused => .any, handler: onPauseEnd)
         stateMachine.addAnyHandler(.any => .any, handler: { ctx in
             logger.append(event: TBLogEventTransition(fromContext: ctx))
         })
@@ -76,6 +87,7 @@ class TBTimer: ObservableObject {
         timerFormatter.zeroFormattingBehavior = .pad
 
         KeyboardShortcuts.onKeyUp(for: .startStopTimer, action: startStop)
+        KeyboardShortcuts.onKeyUp(for: .pauseTimer, action: pause)
         notificationCenter.setActionHandler(handler: onNotificationAction)
 
         let aem: NSAppleEventManager = NSAppleEventManager.shared()
@@ -117,6 +129,10 @@ class TBTimer: ObservableObject {
 
     func skipRest() {
         stateMachine <-! .skipRest
+    }
+
+    func pause() {
+        stateMachine <-! .pause
     }
 
     func updateTimeLeft() {
@@ -225,5 +241,29 @@ class TBTimer: ObservableObject {
         stopTimer()
         TBStatusItem.shared.setIcon(name: .idle)
         consecutiveWorkIntervals = 0
+    }
+
+    private func onPauseStart(context ctx: TBStateMachine.Context) {
+        pausedState = ctx.fromState
+        remainingTimeWhenPaused = finishTime.timeIntervalSince(Date())
+        stopTimer()
+        player.stopTicking()
+        TBStatusItem.shared.setIcon(name: .idle)
+        isPaused = true
+    }
+
+    private func onPauseEnd(context ctx: TBStateMachine.Context) {
+        isPaused = false
+        if ctx.toState == .idle {
+            return
+        }
+        if pausedState == .work {
+            TBStatusItem.shared.setIcon(name: .work)
+            player.startTicking()
+        } else if pausedState == .rest {
+            let imgName: NSImage.Name = consecutiveWorkIntervals == 0 ? .longRest : .shortRest
+            TBStatusItem.shared.setIcon(name: imgName)
+        }
+        startTimer(seconds: Int(remainingTimeWhenPaused))
     }
 }
