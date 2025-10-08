@@ -34,6 +34,7 @@ class TBStatusItem: NSObject, NSApplicationDelegate {
     private var _popover = NSPopover()
     private var statusBarItem: NSStatusItem?
     private var productivityWindow: NSWindow?
+    private var settingsWindow: NSWindow?
     static var shared: TBStatusItem!
 
     func applicationDidFinishLaunching(_: Notification) {
@@ -110,6 +111,27 @@ class TBStatusItem: NSObject, NSApplicationDelegate {
         window.isReleasedWhenClosed = false
 
         productivityWindow = window
+        window.makeKeyAndOrderFront(nil)
+    }
+
+    func showSettingsWindow() {
+        if let window = settingsWindow {
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        let timer = (_popover.contentViewController?.view as? NSHostingView<TBPopoverView>)?.rootView.timer ?? TBTimer()
+        let contentView = TBSettingsWindowView(timer: timer)
+        let hostingController = NSHostingController(rootView: contentView)
+
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = NSLocalizedString("TBPopoverView.settings.label", comment: "Settings")
+        window.styleMask = [.titled, .closable]
+        window.setContentSize(NSSize(width: 300, height: 280))
+        window.center()
+        window.isReleasedWhenClosed = false
+
+        settingsWindow = window
         window.makeKeyAndOrderFront(nil)
     }
 }
