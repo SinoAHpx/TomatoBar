@@ -18,17 +18,28 @@ struct ProductivityView: View {
             }
 
             VStack(spacing: 8) {
-                StatRow(
+                TomatoStatRow(
+                    label: NSLocalizedString("ProductivityView.completed", comment: "Completed"),
+                    count: analyzer.stats.completedTomatoes
+                )
+                TomatoStatRow(
+                    label: NSLocalizedString("ProductivityView.failed", comment: "Failed"),
+                    count: analyzer.stats.failedTomatoes
+                )
+                TomatoStatRow(
+                    label: NSLocalizedString("ProductivityView.total", comment: "Total"),
+                    count: analyzer.stats.totalTomatoes
+                )
+
+                Divider()
+
+                TimeStatRow(
                     label: NSLocalizedString("ProductivityView.work", comment: "Work"),
                     time: analyzer.stats.workTime
                 )
-                StatRow(
+                TimeStatRow(
                     label: NSLocalizedString("ProductivityView.rest", comment: "Rest"),
                     time: analyzer.stats.restTime
-                )
-                StatRow(
-                    label: NSLocalizedString("ProductivityView.idle", comment: "Idle"),
-                    time: analyzer.stats.idleTime
                 )
             }
         }
@@ -55,7 +66,22 @@ struct ProductivityView: View {
     }
 }
 
-private struct StatRow: View {
+private struct TomatoStatRow: View {
+    let label: String
+    let count: Int
+
+    var body: some View {
+        HStack {
+            Text(label)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text("\(count)")
+                .font(.system(.body).monospacedDigit())
+                .foregroundColor(.secondary)
+        }
+    }
+}
+
+private struct TimeStatRow: View {
     let label: String
     let time: TimeInterval
 

@@ -2,7 +2,7 @@ import UserNotifications
 
 enum TBNotification {
     enum Category: String {
-        case restStarted, restFinished
+        case workFinished, restStarted, restFinished
     }
 
     enum Action: String {
@@ -34,6 +34,11 @@ class TBNotificationCenter: NSObject, UNUserNotificationCenterDelegate {
             title: NSLocalizedString("TBTimer.onRestStart.skip.title", comment: "Skip"),
             options: []
         )
+        let workFinishedCategory = UNNotificationCategory(
+            identifier: TBNotification.Category.workFinished.rawValue,
+            actions: [],
+            intentIdentifiers: []
+        )
         let restStartedCategory = UNNotificationCategory(
             identifier: TBNotification.Category.restStarted.rawValue,
             actions: [actionSkipRest],
@@ -46,6 +51,7 @@ class TBNotificationCenter: NSObject, UNUserNotificationCenterDelegate {
         )
 
         center.setNotificationCategories([
+            workFinishedCategory,
             restStartedCategory,
             restFinishedCategory,
         ])

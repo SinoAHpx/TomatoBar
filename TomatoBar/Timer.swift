@@ -10,7 +10,6 @@ class TBTimer: ObservableObject {
     @AppStorage("shortRestIntervalLength") var shortRestIntervalLength = 5
     @AppStorage("longRestIntervalLength") var longRestIntervalLength = 15
     @AppStorage("workIntervalsInSet") var workIntervalsInSet = 4
-    // This preference is "hidden"
     @AppStorage("overrunTimeLimit") var overrunTimeLimit = -60.0
 
     private var stateMachine = TBStateMachine(state: .idle)
@@ -24,6 +23,11 @@ class TBTimer: ObservableObject {
     @Published var timeLeftString: String = ""
     @Published var timer: DispatchSourceTimer?
     @Published var isPaused: Bool = false
+
+    @Published var currentGoal: String = ""
+    @Published var isInTomatoCycle: Bool = false
+    private var tomatoCycleStarted: Bool = false
+    private var isLongBreak: Bool = false
 
     init() {
         /*
@@ -58,10 +62,10 @@ class TBTimer: ObservableObject {
         ])
         stateMachine.addRoutes(event: .timerFired, transitions: [.work => .rest])
         stateMachine.addRoutes(event: .timerFired, transitions: [.rest => .idle]) { _ in
-            self.stopAfterBreak
+            self.stopAfterBreak || (self.isLongBreak && self.isInTomatoCycle)
         }
         stateMachine.addRoutes(event: .timerFired, transitions: [.rest => .work]) { _ in
-            !self.stopAfterBreak
+            !self.stopAfterBreak && !(self.isLongBreak && self.isInTomatoCycle)
         }
         stateMachine.addRoutes(event: .skipRest, transitions: [.rest => .work])
 
@@ -125,7 +129,41 @@ class TBTimer: ObservableObject {
     }
 
     func startStop() {
+        if stateMachine.state == .idle && !isInTomatoCycle {
+            showGoalInputDialog()
+        } else {
+            stateMachine <-! .startStop
+        }
+    }
+
+    func startWithGoal(_ goal: String) {
+        currentGoal = goal
+        isInTomatoCycle = true
+        tomatoCycleStarted = true
         stateMachine <-! .startStop
+    }
+
+    private func showGoalInputDialog() {
+        DispatchQueue.main.async {
+            let alert = NSAlert()
+            alert.messageText = NSLocalizedString("TBTimer.goalInput.title", comment: "Enter your goal")
+            alert.informativeText = NSLocalizedString("TBTimer.goalInput.message", comment: "What do you want to accomplish in this tomato session?")
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: NSLocalizedString("TBTimer.goalInput.start", comment: "Start"))
+            alert.addButton(withTitle: NSLocalizedString("TBTimer.goalInput.cancel", comment: "Cancel"))
+
+            let inputTextField = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
+            inputTextField.placeholderString = NSLocalizedString("TBTimer.goalInput.placeholder", comment: "Enter your goal...")
+            alert.accessoryView = inputTextField
+
+            let response = alert.runModal()
+            if response == .alertFirstButtonReturn {
+                let goal = inputTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !goal.isEmpty {
+                    self.startWithGoal(goal)
+                }
+            }
+        }
     }
 
     func skipRest() {
@@ -204,6 +242,11 @@ class TBTimer: ObservableObject {
     private func onWorkFinish(context _: TBStateMachine.Context) {
         consecutiveWorkIntervals += 1
         player.playDing()
+        notificationCenter.send(
+            title: NSLocalizedString("TBTimer.onWorkFinish.title", comment: "Work session completed"),
+            body: NSLocalizedString("TBTimer.onWorkFinish.body", comment: "Time for a break!"),
+            category: .workFinished
+        )
     }
 
     private func onWorkEnd(context _: TBStateMachine.Context) {
@@ -214,11 +257,13 @@ class TBTimer: ObservableObject {
         var body = NSLocalizedString("TBTimer.onRestStart.short.body", comment: "Short break body")
         var length = shortRestIntervalLength
         var imgName = NSImage.Name.shortRest
+        isLongBreak = false
         if consecutiveWorkIntervals >= workIntervalsInSet {
             body = NSLocalizedString("TBTimer.onRestStart.long.body", comment: "Long break body")
             length = longRestIntervalLength
             imgName = .longRest
             consecutiveWorkIntervals = 0
+            isLongBreak = true
         }
         notificationCenter.send(
             title: NSLocalizedString("TBTimer.onRestStart.title", comment: "Time's up title"),
@@ -233,17 +278,67 @@ class TBTimer: ObservableObject {
         if ctx.event == .skipRest {
             return
         }
-        notificationCenter.send(
-            title: NSLocalizedString("TBTimer.onRestFinish.title", comment: "Break is over title"),
-            body: NSLocalizedString("TBTimer.onRestFinish.body", comment: "Break is over body"),
-            category: .restFinished
-        )
+
+        if !isLongBreak || !isInTomatoCycle {
+            notificationCenter.send(
+                title: NSLocalizedString("TBTimer.onRestFinish.title", comment: "Break is over title"),
+                body: NSLocalizedString("TBTimer.onRestFinish.body", comment: "Break is over body"),
+                category: .restFinished
+            )
+        }
     }
 
-    private func onIdleStart(context _: TBStateMachine.Context) {
+    private func onIdleStart(context ctx: TBStateMachine.Context) {
         stopTimer()
         TBStatusItem.shared.setIcon(name: .idle)
         consecutiveWorkIntervals = 0
+
+        if isInTomatoCycle && tomatoCycleStarted && ctx.event == .startStop {
+            onTomatoFailed()
+        } else if isInTomatoCycle && isLongBreak && ctx.event == .timerFired {
+            onTomatoCompleted()
+        }
+    }
+
+    private func onTomatoCompleted() {
+        guard isInTomatoCycle else { return }
+
+        logger.append(event: TBLogEventTomatoCompleted(goal: currentGoal))
+
+        DispatchQueue.main.async {
+            let alert = NSAlert()
+            alert.messageText = NSLocalizedString("TBTimer.tomatoCompleted.title", comment: "Tomato Completed!")
+            alert.informativeText = String(format: NSLocalizedString("TBTimer.tomatoCompleted.message", comment: "You completed: %@"), self.currentGoal)
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: NSLocalizedString("TBTimer.tomatoCompleted.newGoal", comment: "New Goal"))
+            alert.addButton(withTitle: NSLocalizedString("TBTimer.tomatoCompleted.continue", comment: "Continue"))
+            alert.addButton(withTitle: NSLocalizedString("TBTimer.tomatoCompleted.rest", comment: "Rest"))
+
+            let response = alert.runModal()
+            if response == .alertFirstButtonReturn {
+                self.isInTomatoCycle = false
+                self.tomatoCycleStarted = false
+                self.currentGoal = ""
+                self.showGoalInputDialog()
+            } else if response == .alertSecondButtonReturn {
+                self.tomatoCycleStarted = false
+                self.startWithGoal(self.currentGoal)
+            } else {
+                self.isInTomatoCycle = false
+                self.tomatoCycleStarted = false
+                self.currentGoal = ""
+            }
+        }
+    }
+
+    private func onTomatoFailed() {
+        guard isInTomatoCycle && tomatoCycleStarted else { return }
+
+        logger.append(event: TBLogEventTomatoFailed(goal: currentGoal))
+
+        isInTomatoCycle = false
+        tomatoCycleStarted = false
+        currentGoal = ""
     }
 
     private func onPauseStart(context ctx: TBStateMachine.Context) {

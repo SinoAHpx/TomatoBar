@@ -17,6 +17,20 @@ struct TBPopoverView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+            if timer.isInTomatoCycle && !timer.currentGoal.isEmpty {
+                GroupBox {
+                    HStack {
+                        Text(NSLocalizedString("TBPopoverView.goal.label", comment: "Goal:"))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text(timer.currentGoal)
+                            .font(.caption)
+                            .lineLimit(2)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+
             HStack(spacing: 8) {
                 Button {
                     timer.startStop()

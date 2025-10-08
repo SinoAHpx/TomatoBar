@@ -26,6 +26,26 @@ class TBLogEventTransition: TBLogEvent {
     }
 }
 
+class TBLogEventTomatoCompleted: TBLogEvent {
+    internal let type = "tomatoCompleted"
+    internal let timestamp: Date = Date()
+    internal let goal: String
+
+    init(goal: String) {
+        self.goal = goal
+    }
+}
+
+class TBLogEventTomatoFailed: TBLogEvent {
+    internal let type = "tomatoFailed"
+    internal let timestamp: Date = Date()
+    internal let goal: String
+
+    init(goal: String) {
+        self.goal = goal
+    }
+}
+
 private let logFileName = "TomatoBar.log"
 private let lineEnd = "\n".data(using: .utf8)!
 
