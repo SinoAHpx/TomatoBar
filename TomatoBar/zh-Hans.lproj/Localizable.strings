@@ -60,5 +60,7 @@
 "TBTimer.tomatoCompleted.rest" = "休息";
 "TBTimer.dashCompleted.title" = "冲刺完成!";
 "TBTimer.dashCompleted.message" = "你完成了: %@";
+"TBTimer.dashCompleted.newGoal" = "新目标";
+"TBTimer.dashCompleted.dismiss" = "关闭";
 "TBPopoverView.goal.label" = "目标:";
 "TBPopoverView.dashMode.badge" = "冲刺";

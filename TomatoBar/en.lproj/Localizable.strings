@@ -60,5 +60,7 @@
 "TBTimer.tomatoCompleted.rest" = "Rest";
 "TBTimer.dashCompleted.title" = "Dash Completed!";
 "TBTimer.dashCompleted.message" = "You completed: %@";
+"TBTimer.dashCompleted.newGoal" = "New Goal";
+"TBTimer.dashCompleted.dismiss" = "Close";
 "TBPopoverView.goal.label" = "Goal:";
 "TBPopoverView.dashMode.badge" = "DASH";

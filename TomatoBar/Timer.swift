@@ -411,13 +411,30 @@ class TBTimer: ObservableObject {
     private func onDashCompleted() {
         guard isDashMode else { return }
 
-        logger.append(event: TBLogEventDashCompleted(goal: currentGoal))
+        let completedGoal = currentGoal
+
+        logger.append(event: TBLogEventDashCompleted(goal: completedGoal))
 
         notificationCenter.send(
             title: NSLocalizedString("TBTimer.dashCompleted.title", comment: "Dash Completed!"),
-            body: String(format: NSLocalizedString("TBTimer.dashCompleted.message", comment: "You completed: %@"), currentGoal),
+            body: String(format: NSLocalizedString("TBTimer.dashCompleted.message", comment: "You completed: %@"), completedGoal),
             category: .restFinished
         )
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
+            let alert = NSAlert()
+            alert.messageText = NSLocalizedString("TBTimer.dashCompleted.title", comment: "Dash Completed!")
+            alert.informativeText = String(format: NSLocalizedString("TBTimer.dashCompleted.message", comment: "You completed: %@"), completedGoal)
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: NSLocalizedString("TBTimer.dashCompleted.newGoal", comment: "New Goal"))
+            alert.addButton(withTitle: NSLocalizedString("TBTimer.dashCompleted.dismiss", comment: "Dismiss"))
+
+            if alert.runModal() == .alertFirstButtonReturn {
+                self.showGoalInputDialog()
+            }
+        }
 
         isInTomatoCycle = false
         tomatoCycleStarted = false
