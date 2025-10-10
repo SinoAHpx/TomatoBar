@@ -91,6 +91,16 @@ private struct SettingsView: View {
                                        comment: "Launch at login label"))
                     .frame(maxWidth: .infinity, alignment: .leading)
             }.toggleStyle(.switch)
+            Stepper(value: $timer.returnToWorkCountdown, in: 0 ... 60) {
+                HStack {
+                    Text(NSLocalizedString("SettingsView.returnToWorkCountdown.label",
+                                           comment: "Return to work countdown label"))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text("\(timer.returnToWorkCountdown)s")
+                }
+            }
+            .help(NSLocalizedString("SettingsView.returnToWorkCountdown.help",
+                                    comment: "Return to work countdown hint"))
             Spacer().frame(minHeight: 0)
         }
         .padding(4)

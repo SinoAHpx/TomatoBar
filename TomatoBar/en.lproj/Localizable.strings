@@ -11,6 +11,8 @@
 "SettingsView.showTimerInMenuBar.label" = "Show timer in menu bar";
 "SettingsView.enablePauseFeature.label" = "Enable pause feature";
 "SettingsView.launchAtLogin.label" = "Launch at login";
+"SettingsView.returnToWorkCountdown.label" = "Return to work countdown:";
+"SettingsView.returnToWorkCountdown.help" = "Force user acknowledgment after short breaks (0 to disable)";
 "SoundsView.isWindupEnabled.label" = "Windup";
 "SoundsView.isDingEnabled.label" = "Ding";
 "SoundsView.isTickingEnabled.label" = "Ticking";
@@ -44,6 +46,10 @@
 "TBTimer.onRestStart.skip.title" = "Skip";
 "TBTimer.onRestFinish.title" = "Break is over";
 "TBTimer.onRestFinish.body" = "Keep up the good work!";
+"TBTimer.returnToWork.title" = "Break is Over!";
+"TBTimer.returnToWork.message" = "Time to return to work";
+"TBTimer.returnToWork.button" = "Return to Work";
+"TBTimer.returnToWork.countdown" = "seconds remaining";
 "TBTimer.onWorkFinish.title" = "Work session completed";
 "TBTimer.onWorkFinish.body" = "Time for a break!";
 "TBTimer.goalInput.title" = "New Tomato Session";
@@ -62,5 +68,8 @@
 "TBTimer.dashCompleted.message" = "You completed: %@";
 "TBTimer.dashCompleted.newGoal" = "New Goal";
 "TBTimer.dashCompleted.dismiss" = "Close";
+"TBTimer.tomatoFailed.title" = "Tomato Failed";
+"TBTimer.tomatoFailed.returnToWorkTimeout" = "You didn't return to work in time.";
+"TBTimer.tomatoFailed.ok" = "OK";
 "TBPopoverView.goal.label" = "Goal:";
 "TBPopoverView.dashMode.badge" = "DASH";

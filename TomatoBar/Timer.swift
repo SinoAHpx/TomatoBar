@@ -11,6 +11,7 @@ class TBTimer: ObservableObject {
     @AppStorage("longRestIntervalLength") var longRestIntervalLength = 15
     @AppStorage("workIntervalsInSet") var workIntervalsInSet = 4
     @AppStorage("overrunTimeLimit") var overrunTimeLimit = -60.0
+    @AppStorage("returnToWorkCountdown") var returnToWorkCountdown = 10
 
     private var stateMachine = TBStateMachine(state: .idle)
     public let player = TBPlayer()
@@ -30,6 +31,8 @@ class TBTimer: ObservableObject {
     private var tomatoCycleStarted: Bool = false
     private var isLongBreak: Bool = false
     private var tempDurationStackView: NSStackView?
+    private var shouldStartWorkTimer: Bool = true
+    private var pendingWorkStart: Bool = false
 
     init() {
         /*
@@ -218,6 +221,66 @@ class TBTimer: ObservableObject {
         tempDurationStackView?.isHidden = sender.state == .off
     }
 
+    private func showReturnToWorkDialog() -> Bool {
+        guard returnToWorkCountdown > 0 else {
+            return true
+        }
+
+        var userClickedButton = false
+
+        let presentDialog: () -> Void = { [weak self] in
+            guard let self = self else { return }
+
+            let alert = NSAlert()
+            alert.messageText = NSLocalizedString("TBTimer.returnToWork.title", comment: "Break is over")
+            alert.informativeText = NSLocalizedString("TBTimer.returnToWork.message", comment: "Return to work message")
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: NSLocalizedString("TBTimer.returnToWork.button", comment: "Return to Work"))
+
+            var remainingSeconds = self.returnToWorkCountdown
+            let buttonTextField = NSTextField(labelWithString: "\(remainingSeconds)")
+            buttonTextField.alignment = .center
+            buttonTextField.font = .systemFont(ofSize: 48, weight: .bold)
+
+            let messageLabel = NSTextField(labelWithString: NSLocalizedString("TBTimer.returnToWork.countdown", comment: "seconds remaining"))
+            messageLabel.alignment = .center
+
+            let stackView = NSStackView(frame: NSRect(x: 0, y: 0, width: 200, height: 100))
+            stackView.orientation = .vertical
+            stackView.spacing = 8
+            stackView.addArrangedSubview(buttonTextField)
+            stackView.addArrangedSubview(messageLabel)
+
+            alert.accessoryView = stackView
+
+            var countdownTimer: Timer?
+            countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
+                remainingSeconds -= 1
+                buttonTextField.stringValue = "\(remainingSeconds)"
+
+                if remainingSeconds <= 0 {
+                    timer.invalidate()
+                    NSApp.abortModal()
+                }
+            }
+
+            RunLoop.current.add(countdownTimer!, forMode: .modalPanel)
+
+            let response = alert.runModal()
+            countdownTimer?.invalidate()
+
+            userClickedButton = (response == .alertFirstButtonReturn)
+        }
+
+        if Thread.isMainThread {
+            presentDialog()
+        } else {
+            DispatchQueue.main.sync(execute: presentDialog)
+        }
+
+        return userClickedButton
+    }
+
     func skipRest() {
         stateMachine <-! .skipRest
     }
@@ -291,6 +354,17 @@ class TBTimer: ObservableObject {
     }
 
     private func onWorkStart(context _: TBStateMachine.Context) {
+        guard shouldStartWorkTimer else {
+            pendingWorkStart = true
+            return
+        }
+
+        beginWorkSession()
+    }
+
+    private func beginWorkSession() {
+        pendingWorkStart = false
+
         TBStatusItem.shared.setIcon(name: .work)
         player.playWindup()
         player.startTicking()
@@ -345,12 +419,44 @@ class TBTimer: ObservableObject {
                 category: .restFinished
             )
         }
+
+        if !isLongBreak {
+            shouldStartWorkTimer = false
+            let userReturnedToWork = showReturnToWorkDialog()
+
+            if userReturnedToWork {
+                shouldStartWorkTimer = true
+
+                if Thread.isMainThread {
+                    resumeWorkAfterReturnPrompt()
+                } else {
+                    DispatchQueue.main.async { [weak self] in
+                        self?.resumeWorkAfterReturnPrompt()
+                    }
+                }
+            } else {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+
+                    let alert = NSAlert()
+                    alert.messageText = NSLocalizedString("TBTimer.tomatoFailed.title", comment: "Tomato Failed")
+                    alert.informativeText = NSLocalizedString("TBTimer.tomatoFailed.returnToWorkTimeout", comment: "You didn't return to work in time.")
+                    alert.alertStyle = .warning
+                    alert.addButton(withTitle: NSLocalizedString("TBTimer.tomatoFailed.ok", comment: "OK"))
+                    alert.runModal()
+
+                    self.stateMachine <-! .startStop
+                }
+            }
+        }
     }
 
     private func onIdleStart(context ctx: TBStateMachine.Context) {
         stopTimer()
         TBStatusItem.shared.setIcon(name: .idle)
         consecutiveWorkIntervals = 0
+        shouldStartWorkTimer = true
+        pendingWorkStart = false
 
         if isDashMode && ctx.event == .timerFired {
             onDashCompleted()
@@ -466,5 +572,15 @@ class TBTimer: ObservableObject {
             TBStatusItem.shared.setIcon(name: imgName)
         }
         startTimer(seconds: Int(remainingTimeWhenPaused))
+    }
+
+    private func resumeWorkAfterReturnPrompt() {
+        guard pendingWorkStart else { return }
+        guard stateMachine.state == .work else {
+            pendingWorkStart = false
+            return
+        }
+
+        beginWorkSession()
     }
 }
