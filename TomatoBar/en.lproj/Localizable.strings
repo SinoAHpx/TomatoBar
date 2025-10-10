@@ -28,6 +28,7 @@
 "ProductivityView.completed" = "Completed Tomatoes";
 "ProductivityView.failed" = "Failed Tomatoes";
 "ProductivityView.total" = "Total Tomatoes";
+"ProductivityView.dashes" = "Dashes";
 "ProductivityView.work" = "Work Time";
 "ProductivityView.rest" = "Rest Time";
 "ProductivityView.close" = "Close";
@@ -47,6 +48,7 @@
 "TBTimer.goalInput.title" = "New Tomato Session";
 "TBTimer.goalInput.message" = "What do you want to accomplish in this tomato session?";
 "TBTimer.goalInput.placeholder" = "Enter your goal...";
+"TBTimer.goalInput.dashMode" = "Dash mode (single work session, no breaks)";
 "TBTimer.goalInput.start" = "Start";
 "TBTimer.goalInput.cancel" = "Cancel";
 "TBTimer.tomatoCompleted.title" = "Tomato Completed!";
@@ -54,4 +56,7 @@
 "TBTimer.tomatoCompleted.newGoal" = "New Goal";
 "TBTimer.tomatoCompleted.continue" = "Continue";
 "TBTimer.tomatoCompleted.rest" = "Rest";
+"TBTimer.dashCompleted.title" = "Dash Completed!";
+"TBTimer.dashCompleted.message" = "You completed: %@";
 "TBPopoverView.goal.label" = "Goal:";
+"TBPopoverView.dashMode.badge" = "DASH";

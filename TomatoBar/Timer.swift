@@ -26,6 +26,7 @@ class TBTimer: ObservableObject {
 
     @Published var currentGoal: String = ""
     @Published var isInTomatoCycle: Bool = false
+    @Published var isDashMode: Bool = false
     private var tomatoCycleStarted: Bool = false
     private var isLongBreak: Bool = false
 
@@ -60,7 +61,12 @@ class TBTimer: ObservableObject {
         stateMachine.addRoutes(event: .pause, transitions: [
             .work => .paused, .rest => .paused, .paused => .work, .paused => .rest,
         ])
-        stateMachine.addRoutes(event: .timerFired, transitions: [.work => .rest])
+        stateMachine.addRoutes(event: .timerFired, transitions: [.work => .idle]) { _ in
+            self.isDashMode
+        }
+        stateMachine.addRoutes(event: .timerFired, transitions: [.work => .rest]) { _ in
+            !self.isDashMode
+        }
         stateMachine.addRoutes(event: .timerFired, transitions: [.rest => .idle]) { _ in
             self.stopAfterBreak || (self.isLongBreak && self.isInTomatoCycle)
         }
@@ -136,10 +142,11 @@ class TBTimer: ObservableObject {
         }
     }
 
-    func startWithGoal(_ goal: String) {
+    func startWithGoal(_ goal: String, isDash: Bool = false) {
         currentGoal = goal
         isInTomatoCycle = true
         tomatoCycleStarted = true
+        isDashMode = isDash
         stateMachine <-! .startStop
     }
 
@@ -152,15 +159,27 @@ class TBTimer: ObservableObject {
             alert.addButton(withTitle: NSLocalizedString("TBTimer.goalInput.start", comment: "Start"))
             alert.addButton(withTitle: NSLocalizedString("TBTimer.goalInput.cancel", comment: "Cancel"))
 
+            let stackView = NSStackView(frame: NSRect(x: 0, y: 0, width: 300, height: 50))
+            stackView.orientation = .vertical
+            stackView.spacing = 8
+
             let inputTextField = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
             inputTextField.placeholderString = NSLocalizedString("TBTimer.goalInput.placeholder", comment: "Enter your goal...")
-            alert.accessoryView = inputTextField
+
+            let dashCheckbox = NSButton(checkboxWithTitle: NSLocalizedString("TBTimer.goalInput.dashMode", comment: "Dash mode (single work session, no breaks)"), target: nil, action: nil)
+            dashCheckbox.state = .off
+
+            stackView.addArrangedSubview(inputTextField)
+            stackView.addArrangedSubview(dashCheckbox)
+
+            alert.accessoryView = stackView
 
             let response = alert.runModal()
             if response == .alertFirstButtonReturn {
                 let goal = inputTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !goal.isEmpty {
-                    self.startWithGoal(goal)
+                    let isDash = dashCheckbox.state == .on
+                    self.startWithGoal(goal, isDash: isDash)
                 }
             }
         }
@@ -293,7 +312,9 @@ class TBTimer: ObservableObject {
         TBStatusItem.shared.setIcon(name: .idle)
         consecutiveWorkIntervals = 0
 
-        if isInTomatoCycle && tomatoCycleStarted && ctx.event == .startStop {
+        if isDashMode && ctx.event == .timerFired {
+            onDashCompleted()
+        } else if isInTomatoCycle && tomatoCycleStarted && ctx.event == .startStop {
             onTomatoFailed()
         } else if isInTomatoCycle && isLongBreak && ctx.event == .timerFired {
             onTomatoCompleted()
@@ -339,6 +360,23 @@ class TBTimer: ObservableObject {
         isInTomatoCycle = false
         tomatoCycleStarted = false
         currentGoal = ""
+    }
+
+    private func onDashCompleted() {
+        guard isDashMode else { return }
+
+        logger.append(event: TBLogEventDashCompleted(goal: currentGoal))
+
+        notificationCenter.send(
+            title: NSLocalizedString("TBTimer.dashCompleted.title", comment: "Dash Completed!"),
+            body: String(format: NSLocalizedString("TBTimer.dashCompleted.message", comment: "You completed: %@"), currentGoal),
+            category: .restFinished
+        )
+
+        isInTomatoCycle = false
+        tomatoCycleStarted = false
+        currentGoal = ""
+        isDashMode = false
     }
 
     private func onPauseStart(context ctx: TBStateMachine.Context) {

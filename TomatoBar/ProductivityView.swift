@@ -30,6 +30,10 @@ struct ProductivityView: View {
                     label: NSLocalizedString("ProductivityView.total", comment: "Total"),
                     count: analyzer.stats.totalTomatoes
                 )
+                TomatoStatRow(
+                    label: NSLocalizedString("ProductivityView.dashes", comment: "Dashes"),
+                    count: analyzer.stats.completedDashes
+                )
 
                 Divider()
 

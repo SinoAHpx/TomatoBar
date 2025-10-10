@@ -46,6 +46,16 @@ class TBLogEventTomatoFailed: TBLogEvent {
     }
 }
 
+class TBLogEventDashCompleted: TBLogEvent {
+    internal let type = "dashCompleted"
+    internal let timestamp: Date = Date()
+    internal let goal: String
+
+    init(goal: String) {
+        self.goal = goal
+    }
+}
+
 private let logFileName = "TomatoBar.log"
 private let lineEnd = "\n".data(using: .utf8)!
 

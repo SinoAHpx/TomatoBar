@@ -19,10 +19,21 @@ struct TBPopoverView: View {
         VStack(alignment: .leading, spacing: 8) {
             if timer.isInTomatoCycle && !timer.currentGoal.isEmpty {
                 GroupBox {
-                    HStack {
-                        Text(NSLocalizedString("TBPopoverView.goal.label", comment: "Goal:"))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text(NSLocalizedString("TBPopoverView.goal.label", comment: "Goal:"))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            if timer.isDashMode {
+                                Text(NSLocalizedString("TBPopoverView.dashMode.badge", comment: "DASH"))
+                                    .font(.caption2.bold())
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.accentColor)
+                                    .cornerRadius(4)
+                            }
+                        }
                         Text(timer.currentGoal)
                             .font(.caption)
                             .lineLimit(2)

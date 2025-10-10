@@ -12,6 +12,7 @@ enum ProductivityPeriod: String, CaseIterable {
 struct ProductivityStats {
     var completedTomatoes: Int = 0
     var failedTomatoes: Int = 0
+    var completedDashes: Int = 0
     var workTime: TimeInterval = 0
     var restTime: TimeInterval = 0
 
@@ -58,7 +59,7 @@ class ProductivityAnalyzer: ObservableObject {
             guard !line.isEmpty,
                   let data = line.data(using: .utf8),
                   let event = try? decoder.decode(LogEventData.self, from: data),
-                  (event.type == "tomatoCompleted" || event.type == "tomatoFailed") else {
+                  (event.type == "tomatoCompleted" || event.type == "tomatoFailed" || event.type == "dashCompleted") else {
                 continue
             }
 
@@ -150,6 +151,8 @@ class ProductivityAnalyzer: ObservableObject {
                 stats.completedTomatoes += 1
             case "tomatoFailed":
                 stats.failedTomatoes += 1
+            case "dashCompleted":
+                stats.completedDashes += 1
             default:
                 break
             }
