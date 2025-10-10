@@ -49,6 +49,7 @@
 "TBTimer.goalInput.message" = "What do you want to accomplish in this tomato session?";
 "TBTimer.goalInput.placeholder" = "Enter your goal...";
 "TBTimer.goalInput.dashMode" = "Dash mode (single work session, no breaks)";
+"TBTimer.goalInput.duration" = "Duration (minutes):";
 "TBTimer.goalInput.start" = "Start";
 "TBTimer.goalInput.cancel" = "Cancel";
 "TBTimer.tomatoCompleted.title" = "Tomato Completed!";

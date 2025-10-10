@@ -49,6 +49,7 @@
 "TBTimer.goalInput.message" = "你想在这个番茄时段完成什么?";
 "TBTimer.goalInput.placeholder" = "输入你的目标...";
 "TBTimer.goalInput.dashMode" = "冲刺模式(单次工作,无休息)";
+"TBTimer.goalInput.duration" = "时长(分钟):";
 "TBTimer.goalInput.start" = "开始";
 "TBTimer.goalInput.cancel" = "取消";
 "TBTimer.tomatoCompleted.title" = "番茄完成!";

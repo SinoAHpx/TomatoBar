@@ -29,6 +29,7 @@ class TBTimer: ObservableObject {
     @Published var isDashMode: Bool = false
     private var tomatoCycleStarted: Bool = false
     private var isLongBreak: Bool = false
+    private var tempDurationStackView: NSStackView?
 
     init() {
         /*
@@ -142,11 +143,16 @@ class TBTimer: ObservableObject {
         }
     }
 
-    func startWithGoal(_ goal: String, isDash: Bool = false) {
+    private var dashDuration: Int = 25
+
+    func startWithGoal(_ goal: String, isDash: Bool = false, dashDuration: Int? = nil) {
         currentGoal = goal
         isInTomatoCycle = true
         tomatoCycleStarted = true
         isDashMode = isDash
+        if let duration = dashDuration {
+            self.dashDuration = duration
+        }
         stateMachine <-! .startStop
     }
 
@@ -159,7 +165,7 @@ class TBTimer: ObservableObject {
             alert.addButton(withTitle: NSLocalizedString("TBTimer.goalInput.start", comment: "Start"))
             alert.addButton(withTitle: NSLocalizedString("TBTimer.goalInput.cancel", comment: "Cancel"))
 
-            let stackView = NSStackView(frame: NSRect(x: 0, y: 0, width: 300, height: 50))
+            let stackView = NSStackView(frame: NSRect(x: 0, y: 0, width: 300, height: 80))
             stackView.orientation = .vertical
             stackView.spacing = 8
 
@@ -169,8 +175,26 @@ class TBTimer: ObservableObject {
             let dashCheckbox = NSButton(checkboxWithTitle: NSLocalizedString("TBTimer.goalInput.dashMode", comment: "Dash mode (single work session, no breaks)"), target: nil, action: nil)
             dashCheckbox.state = .off
 
+            let durationStackView = NSStackView()
+            durationStackView.orientation = .horizontal
+            durationStackView.spacing = 8
+
+            let durationLabel = NSTextField(labelWithString: NSLocalizedString("TBTimer.goalInput.duration", comment: "Duration (minutes):"))
+            let durationTextField = NSTextField(frame: NSRect(x: 0, y: 0, width: 60, height: 24))
+            durationTextField.placeholderString = "\(self.workIntervalLength)"
+            durationTextField.stringValue = "\(self.workIntervalLength)"
+
+            durationStackView.addArrangedSubview(durationLabel)
+            durationStackView.addArrangedSubview(durationTextField)
+            durationStackView.isHidden = true
+
+            self.tempDurationStackView = durationStackView
+            dashCheckbox.target = self
+            dashCheckbox.action = #selector(self.dashCheckboxChanged(_:))
+
             stackView.addArrangedSubview(inputTextField)
             stackView.addArrangedSubview(dashCheckbox)
+            stackView.addArrangedSubview(durationStackView)
 
             alert.accessoryView = stackView
 
@@ -179,10 +203,19 @@ class TBTimer: ObservableObject {
                 let goal = inputTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !goal.isEmpty {
                     let isDash = dashCheckbox.state == .on
-                    self.startWithGoal(goal, isDash: isDash)
+                    var duration: Int? = nil
+                    if isDash, let durationValue = Int(durationTextField.stringValue), durationValue > 0 {
+                        duration = durationValue
+                    }
+                    self.startWithGoal(goal, isDash: isDash, dashDuration: duration)
                 }
             }
+            self.tempDurationStackView = nil
         }
+    }
+
+    @objc private func dashCheckboxChanged(_ sender: NSButton) {
+        tempDurationStackView?.isHidden = sender.state == .off
     }
 
     func skipRest() {
@@ -255,7 +288,8 @@ class TBTimer: ObservableObject {
         TBStatusItem.shared.setIcon(name: .work)
         player.playWindup()
         player.startTicking()
-        startTimer(seconds: workIntervalLength * 60)
+        let duration = isDashMode ? dashDuration : workIntervalLength
+        startTimer(seconds: duration * 60)
     }
 
     private func onWorkFinish(context _: TBStateMachine.Context) {
