@@ -226,6 +226,12 @@ class TBTimer: ObservableObject {
         stateMachine <-! .pause
     }
 
+    #if DEBUG
+    func skipSession() {
+        stateMachine <-! .timerFired
+    }
+    #endif
+
     func updateTimeLeft() {
         timeLeftString = timerFormatter.string(from: Date(), to: finishTime)!
         if timer != nil, showTimerInMenuBar {
@@ -348,9 +354,15 @@ class TBTimer: ObservableObject {
 
         if isDashMode && ctx.event == .timerFired {
             onDashCompleted()
-        } else if isInTomatoCycle && tomatoCycleStarted && ctx.event == .startStop {
+            return
+        }
+
+        if isInTomatoCycle && tomatoCycleStarted && ctx.event == .startStop {
             onTomatoFailed()
-        } else if isInTomatoCycle && isLongBreak && ctx.event == .timerFired {
+            return
+        }
+
+        if isInTomatoCycle && isLongBreak && ctx.event == .timerFired {
             onTomatoCompleted()
         }
     }
@@ -411,6 +423,7 @@ class TBTimer: ObservableObject {
         tomatoCycleStarted = false
         currentGoal = ""
         isDashMode = false
+        isLongBreak = false
     }
 
     private func onPauseStart(context ctx: TBStateMachine.Context) {

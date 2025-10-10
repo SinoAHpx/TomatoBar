@@ -69,6 +69,19 @@ struct TBPopoverView: View {
                     }
                     .controlSize(.large)
                 }
+
+                #if DEBUG
+                if timer.timer != nil {
+                    Button {
+                        timer.skipSession()
+                        TBStatusItem.shared.closePopover(nil)
+                    } label: {
+                        Text(NSLocalizedString("TBPopoverView.skip.label", comment: "Skip"))
+                            .frame(width: 60)
+                    }
+                    .controlSize(.large)
+                }
+                #endif
             }
 
             Group {

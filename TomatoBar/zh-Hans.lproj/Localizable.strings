@@ -18,6 +18,7 @@
 "TBPopoverView.stop.label" = "停止";
 "TBPopoverView.pause.label" = "暂停";
 "TBPopoverView.resume.label" = "继续";
+"TBPopoverView.skip.label" = "跳过";
 "TBPopoverView.intervals.label" = "时长";
 "TBPopoverView.settings.label" = "设置";
 "TBPopoverView.sounds.label" = "声音";
